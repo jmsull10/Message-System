@@ -28,20 +28,20 @@ public class MessageSystem {
 	
 	private static String user = "";
 	
-	public static void main(String[] args) throws IOException {
+	public static void main (String[] args) throws IOException {
 		// Main frames for GUI
 		JTabbedPane userPage = new JTabbedPane();
-        JFrame frame = new JFrame("Messaging App");
-        frame.setPreferredSize(new Dimension(960,720));
-        ArrayList<String> localMessages = new ArrayList<>();
+        	JFrame frame         = new JFrame("Messaging App");
+        	frame.setPreferredSize(new Dimension(960,720));
+        	ArrayList<String> localMessages = new ArrayList<>();
         
-        // Login tab for GUI
-        JComponent selectUser = makeTextPanel("Login");
-		JButton login = new JButton("Login");
-		JButton close = new JButton("Close Table");
-		JButton init = new JButton("Initilize Data");
-		JLabel log = new JLabel("Login:");
-		JTextArea userInfo = new JTextArea(5,20);
+        	// Login tab for GUI
+        	JComponent selectUser = makeTextPanel("Login");
+		JButton login         = new JButton("Login");
+		JButton close         = new JButton("Close Table");
+		JButton init          = new JButton("Initilize Data");
+		JLabel log            = new JLabel("Login:");
+		JTextArea userInfo    = new JTextArea(5,20);
 		userInfo.setEditable(true);
 		
 		init.setBounds(390, 220, 160, 25);
@@ -58,29 +58,29 @@ public class MessageSystem {
 		selectUser.add(close);
 
 		// Received Messages for GUI
-		JComponent receivedMessages = makeTextPanel("Received");
-		JButton receivedRefresh = new JButton("Refresh");
+		JComponent receivedMessages  = makeTextPanel("Received");
+		JButton receivedRefresh      = new JButton("Refresh");
 		JTextArea messageBoxReceiver = new JTextArea();
-		JScrollPane scrollReceiver = new JScrollPane(messageBoxReceiver);
+		JScrollPane scrollReceiver   = new JScrollPane(messageBoxReceiver);
 		
 		receivedRefresh.setBounds(750,0,160,25);
 		receivedMessages.add(receivedRefresh);
 		
 		// Sent Messages for GUI
-		JComponent sentMessages = makeTextPanel("Sent");
-		JButton sentRefresh = new JButton("Refresh");
+		JComponent sentMessages    = makeTextPanel("Sent");
+		JButton sentRefresh        = new JButton("Refresh");
 		JTextArea messageBoxSender = new JTextArea();
-		JScrollPane scrollSender = new JScrollPane(messageBoxSender);
+		JScrollPane scrollSender   = new JScrollPane(messageBoxSender);
 		
 		sentRefresh.setBounds(750,0,160,25);
 		sentMessages.add(sentRefresh);
 		
 		// Send Messages for GUI
-		JComponent sendTab = makeTextPanel("Send");
-		JButton send = new JButton("Send");
-		JLabel recipUser = new JLabel("To: ");
+		JComponent sendTab  = makeTextPanel("Send");
+		JButton send        = new JButton("Send");
+		JLabel recipUser    = new JLabel("To: ");
 		JLabel messageTitle = new JLabel("Title: ");
-		JLabel body = new JLabel("Message: ");
+		JLabel body         = new JLabel("Message: ");
 		
 		send.setBounds(0, 450, 100, 25);
 		recipUser.setBounds(0, 0, 50, 25);
@@ -109,61 +109,63 @@ public class MessageSystem {
 		
 		// generates random dates to add to the data set
 		LocalDate earliestDate = LocalDate.of(2010, 1, 1);
-		long earliest = earliestDate.toEpochDay();
+		long earliest          = earliestDate.toEpochDay();
 		
 		LocalDate lastestDate = LocalDate.now();
-		long lastest = lastestDate.toEpochDay();
+		long lastest          = lastestDate.toEpochDay();
 		
-		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-    	SimpleDateFormat dateForm = new SimpleDateFormat("yyyy-MM-dd");
+		SimpleDateFormat sdf      = new SimpleDateFormat("HH:mm:ss");
+    		SimpleDateFormat dateForm = new SimpleDateFormat("yyyy-MM-dd");
 	    	
 		// creates HBase table
 		Configuration config = HBaseConfiguration.create();
-		HTable table = new HTable(config, "messagelogs");
+		HTable table         = new HTable(config, "messagelogs");
 		
 		// ActionListener to initialize data
 		ActionListener runData = new ActionListener() { 
 
 			public void actionPerformed(ActionEvent e) { 
 				System.out.println("HBase Start");
-
-				for (int j = 0; j < 500; j++) { // generates 500 users
+				
+				// generates 500 users
+				for (int j = 0; j < 500; j++) { 
 				    int i = 0;
 			
 				    String userName = generateUser(j);
 				    	
-				    while (i < 10) { // sends 10 messages per user	
+				    // sends 10 messages per user
+				    while (i < 10) { 	
 				    	long randomDate = ThreadLocalRandom.current().longs(earliest, lastest)
 				    			.findAny().getAsLong(); 
-						String sDate = LocalDate.ofEpochDay(randomDate).toString();
-						
-						Long randomTime = new Random().nextLong();
-						String sTime = sdf.format(randomTime).toString();
-				    	
-						String recipUser = "";
-					    int randInt = (int)(Math.random()*500);
 					    
-					    if (randInt != j) {
-					    	recipUser = generateUser(randInt); 
-					    } else {
-					    	randInt = (int)(Math.random()*500);
-					    }
+					String sDate = LocalDate.ofEpochDay(randomDate).toString();
+						
+					Long randomTime = new Random().nextLong();
+					String sTime    = sdf.format(randomTime).toString();
+				    	
+					String recipUser = "";
+					int randInt      = (int)(Math.random()*500);
+					    
+					if (randInt != j) {
+					    recipUser = generateUser(randInt); 
+					} else {
+					    randInt = (int)(Math.random()*500);
+					}
 
 				    	Put p = new Put(Bytes.toBytes(recipUser + " " + sDate + " " + sTime));
 					    	
 				    	p.add(Bytes.toBytes("message"), Bytes.toBytes("author"), Bytes.toBytes(userName));
-					    p.add(Bytes.toBytes("message"), Bytes.toBytes("recip"), Bytes.toBytes(recipUser));
-					    p.add(Bytes.toBytes("message"), Bytes.toBytes("title"), Bytes.toBytes("Greetings!"));
-					    p.add(Bytes.toBytes("message"), Bytes.toBytes("body"), Bytes.toBytes("Hello World!"));
-					    p.add(Bytes.toBytes("message"), Bytes.toBytes("date"), Bytes.toBytes(sDate));
-					    p.add(Bytes.toBytes("message"), Bytes.toBytes("time"), Bytes.toBytes(sTime));
-					    try {
-							table.put(p);
-						} catch (IOException e1) {
-
-						}
+					p.add(Bytes.toBytes("message"), Bytes.toBytes("recip"), Bytes.toBytes(recipUser));
+					p.add(Bytes.toBytes("message"), Bytes.toBytes("title"), Bytes.toBytes("Greetings!"));
+					p.add(Bytes.toBytes("message"), Bytes.toBytes("body"), Bytes.toBytes("Hello World!"));
+					p.add(Bytes.toBytes("message"), Bytes.toBytes("date"), Bytes.toBytes(sDate));
+					p.add(Bytes.toBytes("message"), Bytes.toBytes("time"), Bytes.toBytes(sTime));
+					    
+					try {
+						table.put(p);
+					} catch (IOException e1) {}
 					    	
-					    i++;
+					i++;
 				    }
 				}	 
 			}
@@ -202,7 +204,6 @@ public class MessageSystem {
 				scrollReceiver.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
 				// begins range scan and puts them into the received tab
-
 				ArrayList<String> arr = rangeScan(table, user); // ln 355
 				
 				for(String entry : arr) {
@@ -217,19 +218,20 @@ public class MessageSystem {
 		ActionListener sendMessage = new ActionListener() { 
 
 			public void actionPerformed(ActionEvent e) { 
-				String user = userInfo.getText().trim();
-				String sTitle = title.getText();
+				String user       = userInfo.getText().trim();
+				String sTitle     = title.getText();
 				String sRecipUser = toUser.getText();
 				
 				String[] multiUsers = sRecipUser.split(",");
-				String sMessageBox = messForSend.getText();
+				String sMessageBox  = messForSend.getText();
 				
 				Date today = new Date();
 						
 				String sDate = dateForm.format(today);
 				String sTime = sdf.format(today).toString();
 				
-				for(int i = 0; i < multiUsers.length; i++) { // gets every user in the recip text box and sends each one a message
+				// gets every user in the recip text box and sends each one a message
+				for(int i = 0; i < multiUsers.length; i++) { 
 					String recipUser = multiUsers[i].trim();
 					
 					Put p = new Put(Bytes.toBytes(recipUser + " "+ sDate + " " + sTime));
@@ -245,8 +247,7 @@ public class MessageSystem {
 							+ " \nMessage body: " + sMessageBox + " \nsent: " + sDate + " at " + sTime + "\n\n");
 					try {
 						table.put(p);
-					} catch (IOException e1) {
-					}
+					} catch (IOException e1) {}
 					
 					toUser.setText("");
 					title.setText("");
@@ -259,8 +260,10 @@ public class MessageSystem {
 		ActionListener refreshMessage = new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				if (e.getSource() == receivedRefresh) { // checks to see which refresh button was pressed
+				// checks to see which refresh button was pressed
+				if (e.getSource() == receivedRefresh) {
 					messageBoxReceiver.setText("");
+					
 					// runs another range scan to retreive messages
 					ArrayList<String> arr = rangeScan(table, user); // ln 355
 					
@@ -290,6 +293,7 @@ public class MessageSystem {
 				System.out.println("HBase End");	
 			} 	
 		};
+		
 		// sets each button to an ActionListener
 		login.addActionListener(userLogin);
 		init.addActionListener(runData); 
@@ -299,10 +303,10 @@ public class MessageSystem {
 		sentRefresh.addActionListener(refreshMessage);
 		
 		// Closes GUI
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(userPage, BorderLayout.CENTER);
-        frame.pack();
-        frame.setVisible(true);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.add(userPage, BorderLayout.CENTER);
+		frame.pack();
+		frame.setVisible(true);
 	}
 	
 	// generates users names and adds 0 depending on the i that is passed in.
@@ -354,7 +358,7 @@ public class MessageSystem {
 		} catch (IOException e) {
 		}
 	
-	    try {
+	   	 try {
 		    for (Result rr : scanner) {
 		    	byte [] author = rr.getValue(Bytes.toBytes("message"), Bytes.toBytes("author"));
 		    	byte [] recip = rr.getValue(Bytes.toBytes("message"), Bytes.toBytes("recip"));
@@ -370,15 +374,15 @@ public class MessageSystem {
 		    	String sDate = Bytes.toString(date);
 		    	String sTime = Bytes.toString(time);
 		    	
-				String messageFrom = "Message from: " + sAuthor + " \nTitle: " + sTitle 
-						+ " \nMessage body: " + sBody + " \nsent: " + sDate + " at " + sTime + "\n\n";
+			String messageFrom = "Message from: " + sAuthor + " \nTitle: " + sTitle 
+					+ " \nMessage body: " + sBody + " \nsent: " + sDate + " at " + sTime + "\n\n";
 				
-				messages.add(messageFrom); // put into an ArrayList for printing to GUI
+			messages.add(messageFrom); // put into an ArrayList for printing to GUI
 		    }
-	    } 
-	    finally {
-	      scanner.close();
-	    }
+	    	} 
+	    	finally {
+	      	scanner.close();
+	    	}
 		return messages;
 	}
 }
